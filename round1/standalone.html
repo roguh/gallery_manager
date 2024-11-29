@@ -20,8 +20,21 @@
   }
 
   /* https://piccalil.li/blog/a-more-modern-css-reset/ */
-  *,*::before,*::after{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}body,h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin-block-end:0}ul[role='list'],ol[role='list']{list-style:none}body{min-height:100vh;line-height:1.5}h1,h2,h3,h4,button,input,label{line-height:1.1}h1,h2,h3,h4{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}input,button,textarea,select{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}
+  *,*::before,*::after{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}body,h1,h2,h3,h3,p,figure,blockquote,dl,dd{margin-block-end:0}ul[role='list'],ol[role='list']{list-style:none}body{min-height:100vh;line-height:1.5}h1,h2,h3,h3,button,input,label{line-height:1.1}h1,h2,h3,h3{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}input,button,textarea,select{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}
   </style>
+  
+  <script src="./secret.js"></script>
+  <!-- Masonry -->
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+  <!-- ViewerJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.js"></script>
+  <!-- the inimitable lightGallery -->
+  <link rel="stylesheet" href="https://unpkg.com/lightgallery@2.8.2/css/lightgallery-bundle.min.css"/>
+  <script src="https://unpkg.com/lightgallery@2.8.2/lightgallery.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/fullscreen/lg-fullscreen.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
   <style>
   /* Flexbox gallery, looks nice even with no-javascript */
   .__gallery {
@@ -34,11 +47,14 @@
   }
 
   .__gallery img {
-    box-shadow: rgba(99, 99, 99, 0.4) 0px 4px 8px 0px;
+    box-shadow: rgba(99, 99, 99, 0.6) 0px 4px 8px 0px;
     margin: 1rem;
   }
+  .__gallery img:active, .__gallery img:hover {
+    box-shadow: #ff1694 0px 4px 8px 0px;
+  }
 
-  @media (max-width: 1250px) {
+  @media (max-width: 900px) {
     /* Narrow screens */
     .__gallery img {
       margin: 0.3rem;
@@ -54,12 +70,36 @@
   .viewer-title {
     opacity: 1;
     min-height: 20px;
-    font-size: 15px;
-    color: white;
+    font-size: 16px;
+    color: #fff;
+    font-weight: bold;
     margin: 0;
   }
 
   /* For lightgallery */
+  .lg-backdrop {
+    background-color: #000;
+  }
+  .lg-sub-html p, .lg-sub-html {
+    font-size: 15px;
+    color: #ff1694;
+  }
+  .lg-outer .lg-thumb-item.active, .lg-outer .lg-thumb-item:hover {
+    border-color: #ff1694;
+  }
+  .lg-toolbar .lg-icon {
+    color: #ff1694;
+  }
+  .lg-next, .lg-prev {
+    color: #ff1694;
+    background: none;
+  }
+  .lg-counter {
+    color: #ff1694;
+  }
+
+
+  /* For lightgallery: hide thumbnails in fullscreen */
   .lg-fullscreen-on .lg-inner {
     top: 0 !important;
     bottom: 0 !important;
@@ -68,18 +108,6 @@
     transform: translate3d(0, 100%, 0) !important;
   }
   </style>
-  <script src="./secret.js"></script>
-  <!-- Masonry -->
-  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
-  <!-- ViewerJS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.js"></script>
-  <!-- the inimitable lightGallery -->
-  <link rel="stylesheet" href="https://unpkg.com/lightgallery@2.8.2/css/lightgallery-bundle.min.css"/>
-  <script src="https://unpkg.com/lightgallery@2.8.2/lightgallery.min.js"></script>
-  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/fullscreen/lg-fullscreen.min.js"></script>
-  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
-  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
 </head>
 <body>
   <header></header>
@@ -127,7 +155,7 @@ const addLightGallery = (element) => {
         appendSubHtmlTo: '.lg-sub-html',
 
         plugins: [lgZoom, lgFullscreen, lgThumbnail],
-        speed: 250,
+        speed: 150,
 
         toggleThumb: true,
         thumbHeight: "128px",

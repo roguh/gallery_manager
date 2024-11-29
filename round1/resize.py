@@ -9,9 +9,9 @@ try:
 except ImportError:
     tqdm = lambda x: x
 
-basedir = "./img/Portfolio_2024-12"
-to_thumbnail_dir = lambda path: path.replace("img/", "img/potato/")
-to_smaller_dir = lambda path: path.replace("img/", "img/s/")
+basedir = "./img/max_resolution/Portfolio_2024-12"
+to_thumbnail_dir = lambda path: path.replace("img/max_resolution/", "img/potato/")
+to_smaller_dir = lambda path: path.replace("img/max_resolution/", "img/s/")
 
 os.makedirs(to_thumbnail_dir(basedir), exist_ok=True)
 os.makedirs(to_smaller_dir(basedir), exist_ok=True)

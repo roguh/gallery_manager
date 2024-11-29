@@ -3,20 +3,45 @@ import base64
 import glob
 import os.path
 import sys
+from enum import StrEnum
 from collections import defaultdict
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_path, "external/exifpy"))
+# TODO write your own exif library for jpg + png
 import exifread
 
+# TODO artist parameter
 default_artist = "Felina R.C."
+
+class ImageLocation(StrEnum):
+    AWS_S3 = "AWS_S3"
+    LOCAL = "LOCAL"
+
+
+# TODO img_location parameter
+img_location: ImageLocation = ImageLocation.AWS_S3
 
 # PYTHONPATH=external/exifpy/
 
+# TODO base64 count/enable parameter
 BASE64 = 20  # the first 10 imgs will be data encoded
-basedir = "./img/Portfolio_2024-12"
-to_thumbnail_dir = lambda path: path.replace("img/", "img/potato/")
-to_smaller_dir = lambda path: path.replace("img/", "img/s/")
+
+# TODO basedir parameter
+basedir = "./img/max_resolution/Portfolio_2024-12"
+filepath_root = "./"
+
+if img_location == ImageLocation.AWS_S3:
+# TODO bucket url parameter
+    desired_root = "https://s3.us-east-1.amazonaws.com/media.felina.art/"
+elif img_location == ImageLocation.LOCAL:
+    desired_root = filepath_root
+else:
+    raise ValueError(f"Unknown image location! {img_location}")
+
+# TODO thumbnail and smaller parameter
+to_thumbnail_dir = lambda path: path.replace("img/max_resolution/", "img/potato/")
+to_smaller_dir = lambda path: path.replace("img/max_resolution/", "img/s/")
 
 as_is = "{}".format
 EXIF_TAG_CONVERTERS = {
@@ -32,8 +57,8 @@ EXIF_TAG_CONVERTERS = {
 }
 
 
-def get_tags(img_path: str) -> dict[str, str]:
-    with open(img_path, "rb") as fh:
+def get_tags(img_filepath: str) -> dict[str, str]:
+    with open(img_filepath, "rb") as fh:
         all_tags = exifread.process_file(fh)
     tags = defaultdict(lambda: "")
     for tag, value in all_tags.items():
@@ -53,20 +78,26 @@ def get_tags(img_path: str) -> dict[str, str]:
 
 
 def main():
-    for index, img in enumerate(glob.glob(f"{basedir}/*")):
-        fullsize = img
-        basename = os.path.basename(img)
-        smaller = to_smaller_dir(img) + "_1500.webp"
-        evensmaller = to_smaller_dir(img) + "_900.webp"
-        thumbnail = to_thumbnail_dir(img)
+    for index, img_filepath in enumerate(glob.glob(f"{basedir}/*")):
+        # ./Portfolio/img/
+        # https://s3.us-east-1.amazonaws.com/media.felina.art/img/s/Portfolio_2024-12/_FEL0970.jpg_1500.jpg
+        basename = os.path.basename(filepath_root)
+        img_url = img_filepath.replace(filepath_root, desired_root)
+
+        fullsize = img_url
+        # TODO ensure these filenames are the same used by resize.py
+        smaller = to_smaller_dir(img_url) + "_1500.jpg"
+        evensmaller = to_smaller_dir(img_url) + "_900.webp"
+        thumbnail = to_thumbnail_dir(img_url)
         thumbnail_optimized = thumbnail + ".webp"
-        thumbnail_tiny_optimized = thumbnail + "_tiny.webp"
+        thumbnail_tiny_optimized_filepath = to_thumbnail_dir(img_filepath) + "_tiny.webp"
 
         # Get from exif data
-        tags = get_tags(img)
+        tags = get_tags(img_filepath)
         title = " ".join(
             [basename, "by", tags["Image Artist"] or default_artist]
         )
+        # TODO exif tag parameter
         important_info = " ".join(
             [
                 tags["EXIF ExposureTime"],
@@ -95,7 +126,7 @@ def main():
         tiny_base64 = None
         embedded_thumbnail = f"{thumbnail}"
         if BASE64 and index < BASE64:
-            with open(thumbnail_tiny_optimized, "rb") as tinythumb:
+            with open(thumbnail_tiny_optimized_filepath, "rb") as tinythumb:
                 tiny_base64 = base64.b64encode(tinythumb.read()).decode()
             embedded_thumbnail = (
                 f'data:image/webp;base64,{tiny_base64}'
@@ -112,7 +143,7 @@ def main():
                 data-srcset="{evensmaller} 1100w, {smaller} 1600w"
                 data-download-url="{fullsize}"
             >
-                <img
+                <img_url
                     title="{alt_text}"
                     alt="{alt_text}"
                     src="{embedded_thumbnail}"

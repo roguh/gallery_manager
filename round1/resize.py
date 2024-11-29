@@ -48,17 +48,31 @@ def get_commands(img):
         "webp:lossless=false",
         thumbnail + ".webp",
     ]
-    smaller_cmd = [
-        "magick",
-        fullsize,
-        "-auto-orient",
-        "-quality",
-        "85",
-        "-resize",
-        "900x",
-        "-define",
-        "webp:lossless=false",
-        smaller + ".webp",
+    smaller_cmds = [
+        [
+            "magick",
+            fullsize,
+            "-auto-orient",
+            "-quality",
+            "85",
+            "-resize",
+            "900x900^",
+            "-define",
+            "webp:lossless=false",
+            smaller + "_900.webp",
+        ],
+        [
+            "magick",
+            fullsize,
+            "-auto-orient",
+            "-quality",
+            "92",
+            "-resize",
+            "1500x1500^",
+            "-format",
+            "jpg",
+            smaller + "_1500.webp",
+        ],
     ]
     webp_tiny_cmd = [
         "magick",
@@ -75,9 +89,9 @@ def get_commands(img):
     ]
     return [
         webp_cmd,
-        # smaller_cmd,
         webp_tiny_cmd,
         thumbnail_cmd,
+        *smaller_cmds,
     ]
 
 

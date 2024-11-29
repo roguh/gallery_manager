@@ -19,7 +19,6 @@ to_thumbnail_dir = lambda path: path.replace("img/", "img/potato/")
 to_smaller_dir = lambda path: path.replace("img/", "img/s/")
 
 as_is = "{}".format
-
 EXIF_TAG_CONVERTERS = {
     "EXIF FNumber": "f/{}".format,
     "EXIF FocalLength": "{}mm".format,
@@ -57,7 +56,8 @@ def main():
     for index, img in enumerate(glob.glob(f"{basedir}/*")):
         fullsize = img
         basename = os.path.basename(img)
-        # smaller = to_smaller_dir(img) + ".webp"
+        smaller = to_smaller_dir(img) + "_1500.webp"
+        evensmaller = to_smaller_dir(img) + "_900.webp"
         thumbnail = to_thumbnail_dir(img)
         thumbnail_optimized = thumbnail + ".webp"
         thumbnail_tiny_optimized = thumbnail + "_tiny.webp"
@@ -107,7 +107,11 @@ def main():
             <a 
                 href="{fullsize}"
                 class="__gallery_anchor"
-                data-sub-html="{caption_html}" >
+                data-sub-html="{caption_html}"
+                data-src="{smaller}"
+                data-srcset="{evensmaller} 1100w, {smaller} 1600w"
+                data-download-url="{fullsize}"
+            >
                 <img
                     title="{alt_text}"
                     alt="{alt_text}"

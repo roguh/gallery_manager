@@ -49,6 +49,7 @@ for img in glob.glob("./img/Portfolio_2024-12/*"):
     fullsize = img
     basename = os.path.basename(img)
     thumbnail = img.replace("img/", "img/potato/")
+    thumbnail_optimized = thumbnail + ".webp"
 
     # Get from exif data
     tags = get_tags(img)
@@ -74,6 +75,20 @@ for img in glob.glob("./img/Portfolio_2024-12/*"):
     <p>{important_info} <i>({details})</i></p>
     """.strip().replace("\n", "")
 
-    print(
-        f"""<a href="{fullsize}" class="__gallery_anchor" data-sub-html="{caption_html}" ><img title="{alt_text}" alt="{alt_text}" src="{thumbnail}" data-fullsize="{fullsize}" ></a>"""
-    )
+    html = f"""
+        <a 
+            href="{fullsize}"
+            class="__gallery_anchor"
+            data-sub-html="{caption_html}" >
+            <picture>
+                <source srcset="{thumbnail_optimized}" type="image/webp" />
+                <source srcset="{thumbnail}" />
+                <img
+                    title="{alt_text}"
+                    alt="{alt_text}"
+                    src="{thumbnail}"
+                    data-fullsize="{fullsize}" >
+            </picture>
+        </a>"""
+    html = "".join(line.strip() + " " for line in html.split("\n")).strip()
+    print(html)

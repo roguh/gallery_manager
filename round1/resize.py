@@ -20,3 +20,5 @@ for img in tqdm(glob.glob(f"{basedir}/*")):
     # x256 - Resize so that 256px is the width, the width shall be proportional
     cmd = ["magick", fullsize, "-auto-orient", "-strip", "-quality", "78", "-resize", "x256", thumbnail]
     subprocess.run(cmd)
+    webp_cmd = cmd[:-1] + ["-define", "webp:lossless=false", thumbnail + ".webp"]
+    subprocess.run(webp_cmd)

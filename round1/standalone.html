@@ -1,0 +1,107 @@
+
+<!doctype html>
+<html>
+<head>
+  <title>Gallery demo</title>
+  <style>
+  /* Flexbox gallery, looks nice even with no-javascript */
+  .__gallery {
+    margin: 0 auto;
+    max-width: 1000px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .__gallery img {
+    box-shadow: rgba(99, 99, 99, 0.4) 0px 4px 8px 0px;
+    margin: 1rem;
+  }
+
+  /* For viewerjs */
+  .viewer-title {
+    opacity: 1;
+    min-height: 20px;
+    font-size: 15px;
+    color: white;
+    margin: 0;
+  }
+  </style>
+  <script src="./secret.js"></script>
+  <!-- Masonry -->
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+  <!-- ViewerJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.js"></script>
+  <!-- the inimitable lightGallery -->
+  <link rel="stylesheet" href="https://unpkg.com/lightgallery@2.8.2/css/lightgallery-bundle.min.css"/>
+  <script src="https://unpkg.com/lightgallery@2.8.2/lightgallery.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/fullscreen/lg-fullscreen.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
+</head>
+<body>
+  <section class="__gallery">
+  <!-- <./gen.py -->
+
+  </section>
+</body>
+<script>
+const removeAnchorLinks = (element, anchorClassName) => {
+    if (!element) {
+      element = document;
+    }
+    for (const anchor of element.getElementsByClassName(anchorClassName)) {
+      // Disable the anchor links
+      // They are not needed if the user has javascript and Viewer is working
+      anchor.href = "";
+      anchor.removeAttribute("href");
+    }
+}
+
+const addViewerJS = (element, imageItemSelector) => {
+    const masonry = new Masonry(element, {
+      itemSelector: imageItemSelector,
+      stagger: 50, // milliseconds
+    });
+
+    for (const img of element.getElementsByTagName("img")) {
+      img.addEventListener("click", () =>
+        new Viewer(element, {
+          url: (image) => image.dataset.fullsize,
+          // Turn off flip buttons
+          scalable: false,
+          rotatable: false,
+          tooltip: false,
+          transition: false,
+        })
+      )
+    }
+}
+
+const addLightGallery = (element) => {
+    // data-external-thumb-image might be useful
+    lightGallery(element, {
+        // getCaptionFromTitleOrAlt: false,
+        appendSubHtmlTo: '.lg-sub-html',
+
+        plugins: [lgZoom, lgFullscreen, lgThumbnail],
+        licenseKey: LIGHT_GALLERY_LICENSE_KEY,
+        speed: 250,
+
+        // for lgZoom
+        infiniteZoom: true,
+        // if u want mousewheel zoom, you need https://github.com/sachinchoolur/lightGallery/issues/624
+    })
+}
+
+window.addEventListener("load", () => {
+  // Convert all elements with a certain class into an image gallery
+  for (const element of document.getElementsByClassName("__gallery")) {
+    // addViewerJS(element, '.__gallery_item')
+    addLightGallery(element);
+    removeAnchorLinks(element, "__gallery_anchor");
+  }
+})
+</script>
+</html>

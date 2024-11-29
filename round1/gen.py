@@ -57,7 +57,7 @@ def main():
     for index, img in enumerate(glob.glob(f"{basedir}/*")):
         fullsize = img
         basename = os.path.basename(img)
-        smaller = to_smaller_dir(img) + ".webp"
+        # smaller = to_smaller_dir(img) + ".webp"
         thumbnail = to_thumbnail_dir(img)
         thumbnail_optimized = thumbnail + ".webp"
         thumbnail_tiny_optimized = thumbnail + "_tiny.webp"
@@ -93,7 +93,7 @@ def main():
         )
 
         tiny_base64 = None
-        embedded_thumbnail = ""
+        embedded_thumbnail = f"{thumbnail}"
         if BASE64 and index < BASE64:
             with open(thumbnail_tiny_optimized, "rb") as tinythumb:
                 tiny_base64 = base64.b64encode(tinythumb.read()).decode()

@@ -1,10 +1,24 @@
-
 <!doctype html>
 <html>
 <head>
   <title>Gallery demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+  /* This stylesheet is just for the standalone document, it is not needed for the gallery components. */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: url("./felina_art_signature.png") no-repeat #ff1964;
+    height: 192px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 84px;
+  }
+
   /* https://piccalil.li/blog/a-more-modern-css-reset/ */
   *,*::before,*::after{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}body,h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin-block-end:0}ul[role='list'],ol[role='list']{list-style:none}body{min-height:100vh;line-height:1.5}h1,h2,h3,h4,button,input,label{line-height:1.1}h1,h2,h3,h4{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}input,button,textarea,select{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}
   </style>
@@ -68,6 +82,7 @@
   <script src="https://unpkg.com/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
 </head>
 <body>
+  <header></header>
   <section class="__gallery">
   <!-- <./gen.py -->
   </section>

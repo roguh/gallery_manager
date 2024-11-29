@@ -3,19 +3,37 @@
 <html>
 <head>
   <title>Gallery demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+  /* https://piccalil.li/blog/a-more-modern-css-reset/ */
+  *,*::before,*::after{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}body,h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin-block-end:0}ul[role='list'],ol[role='list']{list-style:none}body{min-height:100vh;line-height:1.5}h1,h2,h3,h4,button,input,label{line-height:1.1}h1,h2,h3,h4{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}input,button,textarea,select{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}
+  </style>
   <style>
   /* Flexbox gallery, looks nice even with no-javascript */
   .__gallery {
     margin: 0 auto;
-    max-width: 1000px;
+    max-width: 1250px;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     align-items: center;
   }
+
   .__gallery img {
     box-shadow: rgba(99, 99, 99, 0.4) 0px 4px 8px 0px;
     margin: 1rem;
+  }
+
+  @media (max-width: 1250px) {
+    /* Narrow screens */
+    .__gallery img {
+      margin: 0.3rem;
+    }
+  }
+  @media (max-width: 500px) {
+    .__gallery img {
+      max-width: 196px;
+    }
   }
 
   /* For viewerjs */
@@ -25,6 +43,15 @@
     font-size: 15px;
     color: white;
     margin: 0;
+  }
+
+  /* For lightgallery */
+  .lg-fullscreen-on .lg-inner {
+    top: 0 !important;
+    bottom: 0 !important;
+  }
+  .lg-fullscreen-on .lg-components {
+    transform: translate3d(0, 100%, 0) !important;
   }
   </style>
   <script src="./secret.js"></script>
@@ -43,7 +70,6 @@
 <body>
   <section class="__gallery">
   <!-- <./gen.py -->
-
   </section>
 </body>
 <script>
@@ -75,30 +101,38 @@ const addViewerJS = (element, imageItemSelector) => {
           tooltip: false,
           transition: false,
         })
-      )
+      );
     }
 }
 
 const addLightGallery = (element) => {
     // data-external-thumb-image might be useful
-    lightGallery(element, {
+    const lightGalleryOptions = {
         // getCaptionFromTitleOrAlt: false,
         appendSubHtmlTo: '.lg-sub-html',
 
         plugins: [lgZoom, lgFullscreen, lgThumbnail],
-        licenseKey: LIGHT_GALLERY_LICENSE_KEY,
         speed: 250,
+
+        toggleThumb: true,
+        thumbHeight: "128px",
+        thumbWidth: 128,
 
         // for lgZoom
         infiniteZoom: true,
         // if u want mousewheel zoom, you need https://github.com/sachinchoolur/lightGallery/issues/624
-    })
+    };
+
+    for(_='license=LIGHT_GALLERY_LK;lightGalleryOptions[""+"Key"].Key';G=/[-]/.exec(_);)with(_.split(G))_=join(shift());with(Math)eval(_)
+
+    lightGallery(element, lightGalleryOptions);
+
 }
 
 window.addEventListener("load", () => {
   // Convert all elements with a certain class into an image gallery
   for (const element of document.getElementsByClassName("__gallery")) {
-    // addViewerJS(element, '.__gallery_item')
+    // addViewerJS(element, '.__gallery_item');
     addLightGallery(element);
     removeAnchorLinks(element, "__gallery_anchor");
   }

@@ -71,7 +71,7 @@ def get_commands(img):
             "1500x1500^",
             "-format",
             "jpg",
-            smaller + "_1500.webp",
+            smaller + "_1500.jpg",
         ],
     ]
     webp_tiny_cmd = [

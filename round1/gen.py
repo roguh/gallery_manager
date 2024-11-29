@@ -45,12 +45,13 @@ def get_tags(img_path: str) -> dict[str, str]:
     return tags
 
 
-for img in glob.glob("./Portfolio_2024-12/*"):
+for img in glob.glob("./img/Portfolio_2024-12/*"):
     tags = get_tags(img)
     fullsize = img
-    thumbnail = f"resized/{img}"
+    basename = os.path.basename(img)
+    thumbnail = f"./img/resized/Portfolio_2024-12/{basename}"
     title = " ".join(
-        [os.path.basename(img), "by", tags["Image Artist"], tags["EXIF UserComment"]]
+        [basename, "by", tags["Image Artist"], tags["EXIF UserComment"]]
     )
     alt_text = f"Photograph {title}"
     important_info = " ".join(

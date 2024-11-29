@@ -1,0 +1,10 @@
+* upload an entire directory of images to S3
+* resize to thumbnails (adapter to img magick or library)
+* point to amazon S3 or any other service (adapters)
+
+* generate standalone HTML/JS code (for testing/demo)
+* generate JS code for my Hugo frontend
+
+* show camera metadata (iso, etc)? use exiftool or py library
+
+* unified Python command

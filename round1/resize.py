@@ -7,9 +7,9 @@ try:
 except ImportError:
     tqdm = lambda x: x
 
-for img in tqdm(glob.glob("./Portfolio_2024-12/*")):
+for img in tqdm(glob.glob("./img/Portfolio_2024-12/*")):
     fullsize = img
-    thumbnail = f"resized/{img}"
+    thumbnail = img.replace('img/', 'img/resized/')
     # Resize so that 256px is the largest dimension
-    cmd = ["magick", fullsize, "-auto-orient", "-resize", "256x256", thumbnail]
+    cmd = ["magick", fullsize, "-auto-orient", "-strip", "-quality", "78", "-resize", "256x256", thumbnail]
     subprocess.run(cmd)

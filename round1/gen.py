@@ -46,14 +46,15 @@ def get_tags(img_path: str) -> dict[str, str]:
 
 
 for img in glob.glob("./img/Portfolio_2024-12/*"):
-    tags = get_tags(img)
     fullsize = img
     basename = os.path.basename(img)
-    thumbnail = f"./img/resized/Portfolio_2024-12/{basename}"
+    thumbnail = img.replace("img/", "img/potato/")
+
+    # Get from exif data
+    tags = get_tags(img)
     title = " ".join(
         [basename, "by", tags["Image Artist"], tags["EXIF UserComment"]]
     )
-    alt_text = f"Photograph {title}"
     important_info = " ".join(
         [tags["EXIF ExposureTime"], tags["EXIF FNumber"], tags["EXIF ISOSpeedRatings"]]
     )
@@ -65,7 +66,8 @@ for img in glob.glob("./img/Portfolio_2024-12/*"):
             tags["EXIF FocalLength"],
         ]
     )
-    alt_text = f"{title}"
+
+    alt_text = f"Photograph {title} ({important_info})"
     # Avoid double quote in this string
     caption_html = f"""
     <h4>{title}</h4>
@@ -73,5 +75,5 @@ for img in glob.glob("./img/Portfolio_2024-12/*"):
     """.strip().replace("\n", "")
 
     print(
-        f"""<a href="{fullsize}" class="__gallery_anchor" data-sub-html="{caption_html}" ><img alt="{alt_text}" src="{thumbnail}" data-fullsize="{fullsize}" ></a>"""
+        f"""<a href="{fullsize}" class="__gallery_anchor" data-sub-html="{caption_html}" ><img title="{alt_text}" alt="{alt_text}" src="{thumbnail}" data-fullsize="{fullsize}" ></a>"""
     )

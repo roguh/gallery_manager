@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import glob
 import os.path
 import sys
@@ -8,7 +9,14 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_path, "external/exifpy"))
 import exifread
 
+default_artist = "Felina R.C."
+
 # PYTHONPATH=external/exifpy/
+
+BASE64 = 20  # the first 10 imgs will be data encoded
+basedir = "./img/Portfolio_2024-12"
+to_thumbnail_dir = lambda path: path.replace("img/", "img/potato/")
+to_smaller_dir = lambda path: path.replace("img/", "img/s/")
 
 as_is = "{}".format
 
@@ -45,50 +53,72 @@ def get_tags(img_path: str) -> dict[str, str]:
     return tags
 
 
-for img in glob.glob("./img/Portfolio_2024-12/*"):
-    fullsize = img
-    basename = os.path.basename(img)
-    thumbnail = img.replace("img/", "img/potato/")
-    thumbnail_optimized = thumbnail + ".webp"
+def main():
+    for index, img in enumerate(glob.glob(f"{basedir}/*")):
+        fullsize = img
+        basename = os.path.basename(img)
+        smaller = to_smaller_dir(img) + ".webp"
+        thumbnail = to_thumbnail_dir(img)
+        thumbnail_optimized = thumbnail + ".webp"
+        thumbnail_tiny_optimized = thumbnail + "_tiny.webp"
 
-    # Get from exif data
-    tags = get_tags(img)
-    title = " ".join(
-        [basename, "by", tags["Image Artist"], tags["EXIF UserComment"]]
-    )
-    important_info = " ".join(
-        [tags["EXIF ExposureTime"], tags["EXIF FNumber"], tags["EXIF ISOSpeedRatings"]]
-    )
-    details = " ".join(
-        [
-            tags["Image DateTime"],
-            tags["Image Make"],
-            tags["Image Model"],
-            tags["EXIF FocalLength"],
-        ]
-    )
+        # Get from exif data
+        tags = get_tags(img)
+        title = " ".join(
+            [basename, "by", tags["Image Artist"] or default_artist]
+        )
+        important_info = " ".join(
+            [
+                tags["EXIF ExposureTime"],
+                tags["EXIF FNumber"],
+                tags["EXIF ISOSpeedRatings"],
+            ]
+        )
+        details = " ".join(
+            [
+                tags["Image DateTime"],
+                tags["Image Make"],
+                tags["Image Model"],
+                tags["EXIF FocalLength"],
+            ]
+        )
 
-    alt_text = f"Photograph {title} ({important_info})"
-    # Avoid double quote in this string
-    caption_html = f"""
-    <h4>{title}</h4>
-    <p>{important_info} <i>({details})</i></p>
-    """.strip().replace("\n", "")
+        alt_text = f"Photograph {title} ({important_info})"
+        # Avoid double quote in this string
+        caption_html = f"""
+        <h4>{title}</h4>
+        <p>{important_info} <i>({details})</i></p>
+        """.strip().replace(
+            "\n", ""
+        )
 
-    html = f"""
-        <a 
-            href="{fullsize}"
-            class="__gallery_anchor"
-            data-sub-html="{caption_html}" >
-            <picture>
-                <source srcset="{thumbnail_optimized}" type="image/webp" />
-                <source srcset="{thumbnail}" />
+        tiny_base64 = None
+        embedded_thumbnail = ""
+        if BASE64 and index < BASE64:
+            with open(thumbnail_tiny_optimized, "rb") as tinythumb:
+                tiny_base64 = base64.b64encode(tinythumb.read()).decode()
+            embedded_thumbnail = (
+                f'data:image/webp;base64,{tiny_base64}'
+            )
+
+        # data-responsively-lazy - for lazy loading
+        # data-fullsize - link to fullsize image, for viewerjs
+        html = f"""
+            <a 
+                href="{fullsize}"
+                class="__gallery_anchor"
+                data-sub-html="{caption_html}" >
                 <img
                     title="{alt_text}"
                     alt="{alt_text}"
-                    src="{thumbnail}"
+                    src="{embedded_thumbnail}"
+                    srcset="{thumbnail_optimized} 256w webp, {thumbnail} 256w"
+                    onerror="this.srcset=this.src"
                     data-fullsize="{fullsize}" >
-            </picture>
-        </a>"""
-    html = "".join(line.strip() + " " for line in html.split("\n")).strip()
-    print(html)
+            </a>"""
+        html = "".join(line.strip() + " " for line in html.split("\n")).strip()
+        print(html)
+
+
+if __name__ == "__main__":
+    main()

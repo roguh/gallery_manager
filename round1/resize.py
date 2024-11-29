@@ -16,6 +16,7 @@ os.makedirs(to_thumbnail_dir(basedir), exist_ok=True)
 for img in tqdm(glob.glob(f"{basedir}/*")):
     fullsize = img
     thumbnail = to_thumbnail_dir(img)
-    # Resize so that 256px is the largest dimension
-    cmd = ["magick", fullsize, "-auto-orient", "-strip", "-quality", "78", "-resize", "256x256", thumbnail]
+    # 256x - Resize so that 256px is the height, the height shall be proportional
+    # x256 - Resize so that 256px is the width, the width shall be proportional
+    cmd = ["magick", fullsize, "-auto-orient", "-strip", "-quality", "78", "-resize", "x256", thumbnail]
     subprocess.run(cmd)

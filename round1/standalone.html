@@ -100,12 +100,13 @@
 
 
   /* For lightgallery: hide thumbnails in fullscreen */
-  .lg-fullscreen-on .lg-inner {
+  .lg-fullscreen-on .lg-content, .lg-fullscreen-on .lg-inner {
     top: 0 !important;
     bottom: 0 !important;
   }
   .lg-fullscreen-on .lg-components {
     transform: translate3d(0, 100%, 0) !important;
+    display: none;
   }
   </style>
 </head>

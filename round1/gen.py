@@ -2,6 +2,7 @@
 import base64
 import glob
 import os.path
+import re
 import sys
 from enum import StrEnum
 from collections import defaultdict
@@ -20,7 +21,8 @@ class ImageLocation(StrEnum):
 
 
 # TODO img_location parameter
-img_location: ImageLocation = ImageLocation.AWS_S3
+# img_location: ImageLocation = ImageLocation.AWS_S3
+img_location: ImageLocation = ImageLocation.LOCAL
 
 # PYTHONPATH=external/exifpy/
 
@@ -77,12 +79,22 @@ def get_tags(img_filepath: str) -> dict[str, str]:
     return tags
 
 
+ORDER_REGEX = re.compile(r"^__(\d+)_(.*)")
+get_order = lambda path: int(ORDER_REGEX.match(os.path.basename(path)).groups()[0]) if ORDER_REGEX.match(os.path.basename(path)) else float('inf')
+remove_order = lambda path: os.path.dirname(path) + "/" + ORDER_REGEX.sub(r"\2", os.path.basename(path))
+
+
 def main():
-    for index, img_filepath in enumerate(glob.glob(f"{basedir}/*")):
+    for index, original_img_filepath in enumerate(sorted(glob.glob(f"{basedir}/*"), key=get_order)):
         # ./Portfolio/img/
         # https://s3.us-east-1.amazonaws.com/media.felina.art/img/s/Portfolio_2024-12/_FEL0970.jpg_1500.jpg
-        basename = os.path.basename(filepath_root)
-        img_url = img_filepath.replace(filepath_root, desired_root)
+        print(os.path.basename(original_img_filepath), get_order(original_img_filepath), file=sys.stderr)
+        tags = get_tags(original_img_filepath)
+        # Convert filepath into the right name for URLs and thumbnails
+        root_img_filepath = remove_order(original_img_filepath)
+        readable_basename = os.path.basename(root_img_filepath)
+        thumbnail_tiny_optimized_filepath = to_thumbnail_dir(root_img_filepath) + "_tiny.webp"
+        img_url = root_img_filepath.replace(" ", "%20").replace(filepath_root, desired_root)
 
         fullsize = img_url
         # TODO ensure these filenames are the same used by resize.py
@@ -90,12 +102,10 @@ def main():
         evensmaller = to_smaller_dir(img_url) + "_900.webp"
         thumbnail = to_thumbnail_dir(img_url)
         thumbnail_optimized = thumbnail + ".webp"
-        thumbnail_tiny_optimized_filepath = to_thumbnail_dir(img_filepath) + "_tiny.webp"
 
         # Get from exif data
-        tags = get_tags(img_filepath)
         title = " ".join(
-            [basename, "by", tags["Image Artist"] or default_artist]
+            [readable_basename, "by", tags["Image Artist"] or default_artist]
         )
         # TODO exif tag parameter
         important_info = " ".join(
@@ -107,7 +117,6 @@ def main():
         )
         details = " ".join(
             [
-                tags["Image DateTime"],
                 tags["Image Make"],
                 tags["Image Model"],
                 tags["EXIF FocalLength"],
@@ -135,17 +144,17 @@ def main():
         # data-responsively-lazy - for lazy loading
         # data-fullsize - link to fullsize image, for viewerjs
         html = f"""
+            <!-- {readable_basename} -->
             <a 
-                href="{fullsize}"
                 class="__gallery_anchor"
                 data-sub-html="{caption_html}"
+                href="{fullsize}"
                 data-src="{smaller}"
                 data-srcset="{evensmaller} 1100w, {smaller} 1600w"
                 data-download-url="{fullsize}"
             >
-                <img_url
+                <img
                     title="{alt_text}"
-                    alt="{alt_text}"
                     src="{embedded_thumbnail}"
                     srcset="{thumbnail_optimized} 256w webp, {thumbnail} 256w"
                     onerror="this.srcset=this.src"

@@ -5,13 +5,20 @@ Good luck!
 """
 import argparse
 import base64
+import datetime
 import glob
 import logging
 import os.path
+import random
 import re
 import sys
 from collections import defaultdict
 from enum import StrEnum
+
+try:
+    import gzip
+except ImportError:
+    gzip = None
 
 # PYTHONPATH add external/exifpy/
 current_path = os.path.dirname(os.path.abspath(__file__))
@@ -98,10 +105,15 @@ parser.add_argument(
     help="REQUIRED if images are in S3. This is the AWS S3 bucket root URL. Example: https://s3.us-east-6.amazonaws.com/your.bucket.name/",
 )
 parser.add_argument(
+    "--local-root-url",
+    default="./",
+)
+parser.add_argument(
     "--image-list",
     "--include-images",
+    "--filter-images",
     "-i",
-    help="OPTIONAL. Include only images whose base filename matches any substring in this comma-separated list. Example: DSC101,DSC102 will select _DSC1010.jpg",
+    help="OPTIONAL. Include only images whose base filename matches any substring in this comma-separated list (filter images). Example: DSC101,DSC102 will select _DSC1010.jpg",
     default="",
 )
 parser.add_argument(
@@ -127,6 +139,36 @@ parser.add_argument(
     default="s/",
 )
 parser.add_argument(
+    "--order-from-filter",
+    help="If using --include-images or --filter-images, respect that order for the final output.",
+    action="store_true",
+)
+parser.add_argument(
+    "--order-from-exif",
+    help="Get the file order from the EXIF datetime.",
+    action="store_true",
+)
+parser.add_argument(
+    "--order-from-prefix",
+    help="Get the file order from a prefix like __1_ or __142_.",
+    action="store_true",
+)
+parser.add_argument(
+    "--shuffled-order",
+    help="Randomized image order",
+    action="store_true",
+)
+parser.add_argument(
+    "--random-seed",
+    help="Random number generator seed",
+    default=None,
+)
+parser.add_argument(
+    "--reverse-order",
+    help="Reverse the file order.",
+    action="store_true",
+)
+parser.add_argument(
     "--important-exif-tags",
     help=f"Comma separated list of EXIF tag names to show in the image description, title, and alt text. Possible values: {POSSIBLE_EXIF_TAGS}",
     default="EXIF ExposureTime,EXIF FNumber,EXIF ISOSpeedRatings",
@@ -135,6 +177,11 @@ parser.add_argument(
     "--other-exif-tags",
     help=f"Comma separated list of EXIF tag names to show in the image description, title, and alt text. Possible values: {POSSIBLE_EXIF_TAGS}",
     default="Image Make,Image Model,EXIF FocalLength",
+)
+parser.add_argument(
+    "--custom-css",
+    help="Custom CSS to insert into template.",
+    default="",
 )
 parser.add_argument(
     "--verbose",
@@ -148,6 +195,10 @@ parser.add_argument(
     help="Log only errors.",
     action="store_true",
 )
+
+
+def filter_match(haystack, filter_) -> bool:
+    return filter_ in haystack
 
 
 def get_tags(img_filepath: str) -> dict[str, str]:
@@ -171,17 +222,25 @@ def get_tags(img_filepath: str) -> dict[str, str]:
     return tags
 
 
-ORDER_REGEX = re.compile(r"^__(\d+)_(.*)")
+def get_exif_datetime(path: str) -> datetime.datetime:
+    return get_tags(path).get("Image DateTime", 0)
+
+
+PREFIX_ORDER_REGEX = re.compile(r"^__(\d+)_(.*)")
 
 
 def remove_file_order(path: str) -> str:
     """Remove the user-specified order from a filename."""
-    return os.path.dirname(path) + "/" + ORDER_REGEX.sub(r"\2", os.path.basename(path))
+    return (
+        os.path.dirname(path)
+        + "/"
+        + PREFIX_ORDER_REGEX.sub(r"\2", os.path.basename(path))
+    )
 
 
 def get_file_order(path: str) -> int | float:
     """Get the user-specified order for a file."""
-    match = ORDER_REGEX.match(os.path.basename(path))
+    match = PREFIX_ORDER_REGEX.match(os.path.basename(path))
     if not match:
         return float("inf")
     return int(match.groups()[0])
@@ -207,7 +266,7 @@ def doit(args: argparse.Namespace):
     if img_location == ImageLocation.AWS_S3:
         desired_root = args.aws_s3_bucket_url
     elif img_location == ImageLocation.LOCAL:
-        desired_root = filepath_root
+        desired_root = args.local_root_url
     else:
         raise ValueError(f"Unknown image location! {img_location}")
     assert isinstance(desired_root, str)
@@ -224,39 +283,66 @@ def doit(args: argparse.Namespace):
     overwrite_artist = args.overwrite_artist
     default_artist = args.default_artist
     html_output_location = args.html_output or "-"
+    custom_css = args.custom_css
 
-    filter_image_list: list[str] = []
+    filters: list[str] = []
     if args.image_list:
-        filter_image_list = [param.strip() for param in args.image_list.split(",")]
+        filters = [param.strip() for param in args.image_list.split(",")]
+    logger.debug("Filter list: %s", filters)
+
+    all_images = glob.glob(f"{basedir}/*")
+    if args.shuffled_order:
+        # Copy list
+        sorted_images = all_images[:]
+        random.shuffle(sorted_images)
+    elif args.order_from_filter:
+        logger.debug("Order from filter")
+        assert filters, "Must pass a list of --filter-images!"
+        sorted_images = []
+        for filtr in filters:
+            for image in all_images:
+                if filter_match(image, filtr) and image not in sorted_images:
+                    sorted_images.append(image)
+    elif args.order_from_exif:
+        sorted_images = list(sorted(all_images, key=get_exif_datetime))
+    elif args.order_from_prefix:
+        sorted_images = list(sorted(all_images, key=get_file_order))
+    else:
+        sorted_images = list(sorted(all_images))
+
+    if args.reverse_order:
+        # Reverse list
+        sorted_images = sorted_images[::-1]
+    logger.debug("Image order: %s", sorted_images)
 
     str_output = []
 
-    def output(line, to):
-        if to == "-":
+    def output(line):
+        if html_output_location == "-":
             print(line)
-        else:
-            str_output.append(line)
+        str_output.append(line)
 
-    for index, original_img_filepath in enumerate(
-        sorted(glob.glob(f"{basedir}/*"), key=get_file_order)
-    ):
+    total_size = 0
+    total_images = 0
+    for index, original_img_filepath in enumerate(sorted_images):
         # ./Portfolio/img/
         # https://s3.us-east-1.amazonaws.com/media.felina.art/img/s/Portfolio_2024-12/_FEL0970.jpg_1500.jpg
-        logger.info("Processing image %s", original_img_filepath)
-        logger.debug(
-            "Converting basename %s to %s",
-            os.path.basename(original_img_filepath),
-            get_file_order(original_img_filepath),
-        )
         tags = get_tags(original_img_filepath)
         # Convert filepath into the right name for URLs and thumbnails
         root_img_filepath = remove_file_order(original_img_filepath)
+        logger.debug("Removed file order %s", root_img_filepath)
         readable_basename = os.path.basename(root_img_filepath)
-        if filter_image_list and not any(
-            readable_basename in param for param in filter_image_list
+        if filters and not any(
+            filter_match(readable_basename, filtr) for filtr in filters
         ):
-            logger.debug("Skipping due to filter: %s", readable_basename)
+            found_filter = [
+                filtr for filtr in filters if filter_match(readable_basename, filtr)
+            ]
+            logger.debug(
+                "Skipping %s due to filter %s", readable_basename, found_filter
+            )
             continue
+        logger.debug("Processing image #%s: %s", total_images, readable_basename)
 
         thumbnail_tiny_optimized_filepath = (
             to_thumbnail_dir(root_img_filepath) + "_tiny.webp"
@@ -267,6 +353,7 @@ def doit(args: argparse.Namespace):
 
         fullsize = img_url
         # TODO ensure these filenames are the same used by resize.py
+        # TODO use shared functions or something....... all scripts in one file?
         smaller = to_smaller_dir(img_url) + "_1500.jpg"
         evensmaller = to_smaller_dir(img_url) + "_900.webp"
         thumbnail = to_thumbnail_dir(img_url)
@@ -321,12 +408,41 @@ def doit(args: argparse.Namespace):
                     data-fullsize="{fullsize}" >
             </a>"""
         html = "".join(line.strip() + " " for line in html.split("\n")).strip()
-        logger.info("Generated %s bytes for this %s", len(html), readable_basename)
-        output(html, html_output_location)
+        logger.debug("Generated %s bytes for %s", len(html), readable_basename)
+        total_size += len(html) + 1  # plus newline
+        total_images += 1
+        output(html)
 
-    if str_output:
+    if total_images > 0:
+        logger.info(
+            "Generated %s images, %s total bytes, average of %.2f bytes per image",
+            total_images,
+            total_size,
+            total_size / total_images,
+        )
+    else:
+        logger.warning("Empty image set? Filters too strict or wrong paths given.")
+
+    template_out = ""
+    if html_output_location != "-":
         with open(html_output_location, "r", encoding="utf-8") as htmltemplate:
-            print(htmltemplate.read().replace("<!-- gen.py output -->", "\n".join(str_output)))
+            template_out = (
+                htmltemplate.read()
+                .replace("/* Flexbox gallery custom CSS from gen.py */", custom_css)
+                .replace("<!-- gen.py output -->", "\n".join(str_output))
+            )
+            print(template_out)
+
+    if gzip and total_images > 0:
+        if template_out:
+            gzip_size = len(gzip.compress(template_out.encode()))
+        else:
+            gzip_size = len(gzip.compress("\n".join(str_output).encode()))
+        logger.info(
+            "Approximate GZIP size of all output: %s, savings of %.2f%%",
+            gzip_size,
+            100 * (1 - gzip_size / total_size),
+        )
 
 
 def main(sys_args=sys.argv[1:]):
@@ -339,6 +455,8 @@ def main(sys_args=sys.argv[1:]):
     else:
         logger.setLevel(logging.INFO)
     logger.debug(args)
+    if args.random_seed:
+        random.seed(args.random_seed)
     try:
         doit(args)
     except KeyboardInterrupt:

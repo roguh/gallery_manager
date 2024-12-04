@@ -3,6 +3,7 @@ import glob
 import multiprocessing
 import os
 import time
+import re
 
 try:
     from tqdm import tqdm
@@ -10,12 +11,23 @@ except ImportError:
     tqdm = lambda x: x
 
 basedir = "./img/max_resolution/Portfolio_2024-12"
-to_thumbnail_dir = lambda path: path.replace("img/max_resolution/", "img/potato/")
-to_smaller_dir = lambda path: path.replace("img/max_resolution/", "img/s/")
 
+remove_file_order = True
+
+
+
+ORDER_REGEX = re.compile(r"^__(\d+)_(.*)")
+
+def remove_file_order(path: str) -> str:
+    """Remove the user-specified order from a filename."""
+    if not remove_file_order:
+        return path
+    return os.path.dirname(path) + "/" + ORDER_REGEX.sub(r"\2", os.path.basename(path))
+
+to_thumbnail_dir = lambda path: remove_file_order(path.replace("img/max_resolution/", "img/potato/"))
+to_smaller_dir = lambda path: remove_file_order(path.replace("img/max_resolution/", "img/s/"))
 os.makedirs(to_thumbnail_dir(basedir), exist_ok=True)
 os.makedirs(to_smaller_dir(basedir), exist_ok=True)
-
 
 def get_commands(img):
     fullsize = img

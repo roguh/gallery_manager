@@ -18,7 +18,7 @@ SHARED_PARAMS="\
 echo
 
 ./gen.py $SHARED_PARAMS --order-from-filter --filter-images \
-    FEL1978,FEL1976,15.14.00,FEL1464,FEL9793 \
+    FEL1978,FEL1976,15.14.00,FEL1464,FEL9793,FEL1997 \
     > $OUTDIR/bw_portfolio.html
 
 echo

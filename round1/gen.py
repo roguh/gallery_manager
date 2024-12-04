@@ -45,7 +45,7 @@ class ImageLocation(StrEnum):
     @classmethod
     def members(cls):
         """Return list of all enum member names."""
-        return [name for name in cls.__members__]
+        return list(cls.__members__)
 
 
 as_is = "{}".format
@@ -136,7 +136,7 @@ parser.add_argument(
 parser.add_argument(
     "--smaller-sub-dir",
     help="Sub-folder where all the less-than-fullsize images are located.",
-    default="s/",
+    default="potato/",
 )
 parser.add_argument(
     "--order-from-filter",
@@ -230,7 +230,7 @@ def get_tags(img_filepath: str) -> dict[str, str]:
     return tags
 
 
-def get_exif_datetime(path: str) -> datetime.datetime:
+def get_exif_datetime(path: str) -> datetime.datetime | int:
     return get_tags(path).get("Image DateTime", 0)
 
 
@@ -285,6 +285,16 @@ def doit(args: argparse.Namespace):
     to_smaller_dir = lambda path: path.replace(
         max_resolution_dir, smaller_resolution_dir
     )
+    def all_filepaths(fullsize_img: str) -> dict[str, str]:
+        return {
+        "fullsize": fullsize_img,
+        "thumbnail_tiny_optimized_filepath": to_thumbnail_dir(fullsize_img)
+        + "_tiny.webp",
+        "smaller": to_smaller_dir(fullsize_img) + "_1500.jpg",
+        "evensmaller": to_smaller_dir(fullsize_img) + "_900.webp",
+        "thumbnail": to_thumbnail_dir(fullsize_img),
+        "thumbnail_optimized": to_thumbnail_dir(fullsize_img) + ".webp",
+    }
 
     displayed_exif_tags = parse_tags_list(args.important_exif_tags)
     misc_exif_tags = parse_tags_list(args.other_exif_tags)
@@ -322,6 +332,19 @@ def doit(args: argparse.Namespace):
         # Reverse list
         sorted_images = sorted_images[::-1]
     logger.debug("Image order: %s", sorted_images)
+        
+    # TODO assert that S3 url exists...?
+    # check that all expected filenames exist locally
+    verified_paths = defaultdict(list)
+    for image_path in all_images:
+        for name, file in all_filepaths(image_path).items():
+            fpath = os.path.realpath(file)
+            assert os.path.exists(fpath), f"{name} is missing!"
+            verified_paths[name].append(os.path.basename(fpath))
+    if verified_paths:
+        for type_ in verified_paths:
+            logger.debug("Verified %s paths exist: %s", type_, " ".join(verified_paths[type_]))
+
 
     str_output = []
 
@@ -353,20 +376,16 @@ def doit(args: argparse.Namespace):
             continue
         logger.debug("Processing image #%s: %s", total_images, readable_basename)
 
-        thumbnail_tiny_optimized_filepath = (
-            to_thumbnail_dir(root_img_filepath) + "_tiny.webp"
-        )
-        img_url = root_img_filepath.replace(" ", "%20").replace(
-            filepath_root, desired_root
-        )
+        filepaths = all_filepaths(root_img_filepath)
+        urls = {name: path.replace(" ", "%20").replace(filepath_root, desired_root) for name, path in filepaths.items()}
 
-        fullsize = img_url
+        fullsize = urls["fullsize"]
         # TODO ensure these filenames are the same used by resize.py
         # TODO use shared functions or something....... all scripts in one file?
-        smaller = to_smaller_dir(img_url) + "_1500.jpg"
-        evensmaller = to_smaller_dir(img_url) + "_900.webp"
-        thumbnail = to_thumbnail_dir(img_url)
-        thumbnail_optimized = thumbnail + ".webp"
+        smaller = urls["smaller"]
+        evensmaller = urls["evensmaller"]
+        thumbnail = urls["thumbnail"]
+        thumbnail_optimized = urls["thumbnail_optimized"]
 
         if overwrite_artist:
             artist = overwrite_artist
@@ -394,7 +413,7 @@ def doit(args: argparse.Namespace):
         tiny_base64 = None
         embedded_thumbnail = f"{thumbnail}"
         if total_base64 and index < total_base64:
-            with open(thumbnail_tiny_optimized_filepath, "rb") as tinythumb:
+            with open(filepaths["thumbnail_tiny_optimized_filepath"], "rb") as tinythumb:
                 tiny_base64 = base64.b64encode(tinythumb.read()).decode()
             embedded_thumbnail = f"data:image/webp;base64,{tiny_base64}"
 

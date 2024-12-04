@@ -25,7 +25,7 @@ def remove_file_order(path: str) -> str:
     return os.path.dirname(path) + "/" + ORDER_REGEX.sub(r"\2", os.path.basename(path))
 
 to_thumbnail_dir = lambda path: remove_file_order(path.replace("img/max_resolution/", "img/potato/"))
-to_smaller_dir = lambda path: remove_file_order(path.replace("img/max_resolution/", "img/s/"))
+to_smaller_dir = lambda path: remove_file_order(path.replace("img/max_resolution/", "img/potato/"))
 os.makedirs(to_thumbnail_dir(basedir), exist_ok=True)
 os.makedirs(to_smaller_dir(basedir), exist_ok=True)
 

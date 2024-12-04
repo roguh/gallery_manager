@@ -5,13 +5,14 @@ OUTDIR="output/"
 IMAGE_LOCATION=local  # or aws_s3
 # point local to the root URL / so that images come straight from http://host.domain/img/
 SHARED_PARAMS="\
-    --local-root-url /
+    --overwrite-artist Felina \
+    --local-root-url / \
     --basedir ./img/max_resolution/Portfolio_2024-12/ \
     --image-location "$IMAGE_LOCATION" \
     --html-output templates/lightgallery_or_viewerjs_or_nojs.html $@"
 
 ./gen.py $SHARED_PARAMS --custom-css '.__gallery{max-width:960px;}' --order-from-filter --filter-images \
-    FEL180,FEL1746,FEL9793,FEL1738,14.52,FEL1709,FEL1835,FEL1817,FEL1834,FEL7638 \
+    FEL180,FEL1746,FEL9793,FEL1738,14.52,FEL1709,FEL7638,FEL1817,FEL1835,FEL1834 \
     > $OUTDIR/portfolio.html
 
 echo
@@ -37,6 +38,12 @@ echo
 ./gen.py $SHARED_PARAMS --order-from-filter --filter-images \
     _FEL1513,_FEL6640,_FEL7134,_FEL7483 \
     > $OUTDIR/lowlight_portfolio.html
+
+echo
+
+./gen.py $SHARED_PARAMS --order-from-filter --filter-images \
+    FEL0970,FEL1011 \
+    > $OUTDIR/minimalist_portfolio.html
 
 echo
 

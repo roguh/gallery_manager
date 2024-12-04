@@ -372,7 +372,7 @@ def doit(args: argparse.Namespace):
             artist = overwrite_artist
         else:
             artist = tags["Image Artist"] or default_artist
-        title = " ".join([readable_basename, "by", artist])
+        title = " ".join([readable_basename] + (["by", artist] if artist else []))
 
         important_info = ""
         if displayed_exif_tags:
@@ -382,11 +382,11 @@ def doit(args: argparse.Namespace):
             logger.debug("Important tags: %s", displayed_exif_tags)
         details = " ".join([tags.get(tag, "") for tag in misc_exif_tags])
 
-        alt_text = f"Photograph {title} ({important_info})"
+        alt_text = f"{title} (Exposure: {important_info})"
         # Avoid double quote in this string
         caption_html = f"""
         <h4>{title}</h4>
-        <p>{important_info} <i>({details})</i></p>
+        <p>Exposure: {important_info} <i>({details})</i></p>
         """.strip().replace(
             "\n", ""
         )

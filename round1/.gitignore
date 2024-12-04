@@ -1,4 +1,4 @@
 secret.js
 img/
 external/
-output/
+*output*/

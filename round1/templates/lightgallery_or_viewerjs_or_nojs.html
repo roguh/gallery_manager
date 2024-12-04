@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+<head>
+  <title>Photo Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+  /* This stylesheet is just for the standalone document, it is not needed for the gallery components. */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: url("./felina_art_signature.png") no-repeat #ff1964;
+    height: 192px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 84px;
+  }
+
+  /* https://piccalil.li/blog/a-more-modern-css-reset/ */
+  *,*::before,*::after{box-sizing:border-box}html{-moz-text-size-adjust:none;-webkit-text-size-adjust:none;text-size-adjust:none}body,h1,h2,h3,h3,p,figure,blockquote,dl,dd{margin-block-end:0}ul[role='list'],ol[role='list']{list-style:none}body{min-height:100vh;line-height:1.5}h1,h2,h3,h3,button,input,label{line-height:1.1}h1,h2,h3,h3{text-wrap:balance}a:not([class]){text-decoration-skip-ink:auto;color:currentColor}img,picture{max-width:100%;display:block}input,button,textarea,select{font-family:inherit;font-size:inherit}textarea:not([rows]){min-height:10em}:target{scroll-margin-block:5ex}
+  </style>
+  
+  <script src="./secret.js"></script>
+  <!-- Masonry -->
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+  <!-- ViewerJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.7/viewer.min.js"></script>
+  <!-- the inimitable lightGallery -->
+  <link rel="stylesheet" href="https://unpkg.com/lightgallery@2.8.2/css/lightgallery-bundle.min.css"/>
+  <script src="https://unpkg.com/lightgallery@2.8.2/lightgallery.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/fullscreen/lg-fullscreen.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+  <script src="https://unpkg.com/lightgallery@2.8.2/plugins/zoom/lg-zoom.min.js"></script>
+  <style>
+  /* Flexbox gallery, looks nice even with no-javascript */
+  .__gallery {
+    margin: 0 auto;
+    max-width: 1250px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .__gallery img {
+    box-shadow: rgba(99, 99, 99, 0.6) 0px 4px 8px 0px;
+    margin: 1rem;
+    height: 256px;
+  }
+  .__gallery img:active, .__gallery img:hover {
+    box-shadow: #ff1694 0px 4px 8px 0px;
+  }
+
+  @media (max-width: 900px) {
+    /* Narrow screens */
+    .__gallery img {
+      margin: 0.3rem;
+      max-height: 200px;
+    }
+  }
+  @media (max-width: 500px) {
+    .__gallery img {
+      max-height: 170px;
+    }
+  }
+
+  /* For viewerjs */
+  .viewer-title {
+    opacity: 1;
+    min-height: 20px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  /* For lightgallery */
+  .lg-backdrop {
+    background-color: #000;
+  }
+  .lg-sub-html p, .lg-sub-html {
+    font-size: 15px;
+    color: #ff1694;
+  }
+  .lg-outer .lg-thumb-item.active, .lg-outer .lg-thumb-item:hover {
+    border-color: #ff1694;
+  }
+  .lg-toolbar .lg-icon {
+    color: #ff1694;
+  }
+  .lg-next, .lg-prev {
+    color: #ff1694;
+    background: none;
+  }
+  .lg-counter {
+    color: #ff1694;
+  }
+
+  @media (max-height: 600px) {
+    .lg-thumb-item {
+      width: 50px !important;
+      height: 50px !important;
+    }
+  }
+  @media (max-height: 400px) {
+    .lg-thumb-item {
+      width: 25px !important;
+      height: 25px !important;
+    }
+  }
+
+  /* For lightgallery: hide thumbnails in fullscreen */
+  .lg-fullscreen-on .lg-content, .lg-fullscreen-on .lg-inner {
+    top: 0 !important;
+    bottom: 0 !important;
+  }
+  .lg-fullscreen-on .lg-components {
+    transform: translate3d(0, 100%, 0) !important;
+    display: none;
+  }
+  </style>
+</head>
+<body>
+  <header></header>
+  <section class="__gallery"><!-- gen.py output --></section>
+</body>
+<script>
+const removeAnchorLinks = (element, anchorClassName) => {
+    if (!element) {
+      element = document;
+    }
+    for (const anchor of element.getElementsByClassName(anchorClassName)) {
+      // Disable the anchor links
+      // They are not needed if the user has javascript and Viewer is working
+      anchor.href = "";
+      anchor.removeAttribute("href");
+    }
+}
+
+const addViewerJS = (element, imageItemSelector) => {
+    const masonry = new Masonry(element, {
+      itemSelector: imageItemSelector,
+      stagger: 50, // milliseconds
+    });
+
+    for (const img of element.getElementsByTagName("img")) {
+      img.addEventListener("click", () =>
+        new Viewer(element, {
+          url: (image) => image.dataset.fullsize,
+          // Turn off flip buttons
+          scalable: false,
+          rotatable: false,
+          tooltip: false,
+          transition: false,
+        })
+      );
+    }
+}
+
+const addLightGallery = (element) => {
+    // data-external-thumb-image might be useful
+    const lightGalleryOptions = {
+        // getCaptionFromTitleOrAlt: false,
+        appendSubHtmlTo: '.lg-sub-html',
+
+        plugins: [lgZoom, lgFullscreen, lgThumbnail],
+        speed: 150,
+
+        toggleThumb: true,
+        thumbHeight: "128px",
+        thumbWidth: 128,
+
+        // for lgZoom
+        infiniteZoom: true,
+        // if u want mousewheel zoom, you need https://github.com/sachinchoolur/lightGallery/issues/624
+    };
+
+    for(_='license=LG_LK;lightGalleryOptions[""+"Key"].Key';G=/[-]/.exec(_);)with(_.split(G))_=join(shift());with(Math)eval(_)
+
+    lightGallery(element, lightGalleryOptions);
+
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  // Convert all elements with a certain class into an image gallery
+  for (const element of document.getElementsByClassName("__gallery")) {
+    // addViewerJS(element, '.__gallery_item');
+    addLightGallery(element);
+    removeAnchorLinks(element, "__gallery_anchor");
+  }
+})
+</script>
+</html>

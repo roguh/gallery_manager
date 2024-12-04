@@ -197,6 +197,14 @@ parser.add_argument(
 )
 
 
+def parse_csv(thelist: str) -> list[str]:
+    return [item.strip() for item in thelist.split(",")]
+
+
+parse_tags_list = parse_csv
+parse_filters = parse_csv
+
+
 def filter_match(haystack, filter_) -> bool:
     return filter_ in haystack
 
@@ -278,8 +286,8 @@ def doit(args: argparse.Namespace):
         max_resolution_dir, smaller_resolution_dir
     )
 
-    displayed_exif_tags = args.important_exif_tags
-    misc_exif_tags = args.other_exif_tags
+    displayed_exif_tags = parse_tags_list(args.important_exif_tags)
+    misc_exif_tags = parse_tags_list(args.other_exif_tags)
     overwrite_artist = args.overwrite_artist
     default_artist = args.default_artist
     html_output_location = args.html_output or "-"
@@ -287,7 +295,7 @@ def doit(args: argparse.Namespace):
 
     filters: list[str] = []
     if args.image_list:
-        filters = [param.strip() for param in args.image_list.split(",")]
+        filters = parse_filters(args.image_list)
     logger.debug("Filter list: %s", filters)
 
     all_images = glob.glob(f"{basedir}/*")
@@ -328,6 +336,7 @@ def doit(args: argparse.Namespace):
         # ./Portfolio/img/
         # https://s3.us-east-1.amazonaws.com/media.felina.art/img/s/Portfolio_2024-12/_FEL0970.jpg_1500.jpg
         tags = get_tags(original_img_filepath)
+        logger.debug("EXIF Tags: %s", dict(tags))
         # Convert filepath into the right name for URLs and thumbnails
         root_img_filepath = remove_file_order(original_img_filepath)
         logger.debug("Removed file order %s", root_img_filepath)
@@ -370,6 +379,7 @@ def doit(args: argparse.Namespace):
             important_info = " ".join(
                 [tags.get(tag, "") for tag in displayed_exif_tags]
             )
+            logger.debug("Important tags: %s", displayed_exif_tags)
         details = " ".join([tags.get(tag, "") for tag in misc_exif_tags])
 
         alt_text = f"Photograph {title} ({important_info})"

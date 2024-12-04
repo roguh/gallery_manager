@@ -277,7 +277,7 @@ def doit(args: argparse.Namespace):
         desired_root = args.local_root_url
     else:
         raise ValueError(f"Unknown image location! {img_location}")
-    assert isinstance(desired_root, str)
+    assert isinstance(desired_root, str), "What should the root URL be?"
 
     to_thumbnail_dir = lambda path: path.replace(
         max_resolution_dir, thumbnail_resolution_dir

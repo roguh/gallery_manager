@@ -86,6 +86,12 @@ parser.add_argument(
     default="-",
 )
 parser.add_argument(
+    "--html-template",
+    "-t",
+    help="Use this template file. Will replace the string '<!-- gen.py output -->' in the template file with special HTML. LightGallery ($) or ViewerJS recommended, but suitable for non-JS browsers as well.",
+    default="",
+)
+parser.add_argument(
     "--basedir",
     "-b",
     help="Folder where all the full size images are located. "
@@ -301,6 +307,7 @@ def doit(args: argparse.Namespace):
     overwrite_artist = args.overwrite_artist
     default_artist = args.default_artist
     html_output_location = args.html_output or "-"
+    html_template_location = args.html_template or "-"
     custom_css = args.custom_css
 
     filters: list[str] = []
@@ -452,19 +459,25 @@ def doit(args: argparse.Namespace):
     else:
         logger.warning("Empty image set? Filters too strict or wrong paths given.")
 
-    template_out = ""
-    if html_output_location != "-":
-        with open(html_output_location, "r", encoding="utf-8") as htmltemplate:
-            template_out = (
+    final_out = "\n".join(str_output)
+    if html_template_location:
+        with open(html_template_location, "r", encoding="utf-8") as htmltemplate:
+            final_out = (
                 htmltemplate.read()
                 .replace("/* Flexbox gallery custom CSS from gen.py */", custom_css)
-                .replace("<!-- gen.py output -->", "\n".join(str_output))
+                .replace("<!-- gen.py output -->", final_out)
             )
-            print(template_out)
+    
+    if html_output_location != "-":
+        with open(html_output_location, "w", encoding="utf-8") as htmlout:
+            htmlout.write(final_out)
+    else:
+        # The output is printed to stdout as its generated
+        pass
 
     if gzip and total_images > 0:
-        if template_out:
-            gzip_size = len(gzip.compress(template_out.encode()))
+        if final_out:
+            gzip_size = len(gzip.compress(final_out.encode()))
         else:
             gzip_size = len(gzip.compress("\n".join(str_output).encode()))
         logger.info(
